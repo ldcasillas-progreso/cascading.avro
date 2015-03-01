@@ -14,19 +14,18 @@
 
 package cascading.avro;
 
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import cascading.tuple.Fields;
 import org.apache.avro.AvroRuntimeException;
 import org.apache.avro.Schema;
-import org.apache.avro.Schema.Field;
-import org.apache.avro.Schema.Type;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericData.Fixed;
-import org.apache.avro.generic.GenericData.Record;
 import org.apache.avro.generic.IndexedRecord;
 import org.apache.hadoop.io.BytesWritable;
 
@@ -38,9 +37,9 @@ public class AvroToCascading {
 
         Object[] result = new Object[readerSchema.getFields().size()];
         Schema writerSchema = record.getSchema();
-        List<Field> schemaFields = readerSchema.getFields();
+        List<Schema.Field> schemaFields = readerSchema.getFields();
         for (int i = 0; i < schemaFields.size(); i++) {
-            Field field = schemaFields.get(i);
+            Schema.Field field = schemaFields.get(i);
             if (writerSchema.getField(field.name()) == null) {
                 throw new AvroRuntimeException("Not a valid schema field: " + field.name());
             }
@@ -133,11 +132,100 @@ public class AvroToCascading {
             return fromAvro(obj, types.get(0));
         } else if (types.size() > 2) {
             throw new AvroRuntimeException("Unions may only consist of a concrete type and null in cascading.avro");
-        } else if (!types.get(0).getType().equals(Type.NULL) && !types.get(1).getType().equals(Type.NULL)) {
+        } else if (!types.get(0).getType().equals(Schema.Type.NULL) && !types.get(1).getType().equals(Schema.Type.NULL)) {
             throw new AvroRuntimeException("Unions may only consist of a concrete type and null in cascading.avro");
         } else {
-            Integer concreteIndex = (types.get(0).getType() == Type.NULL) ? 1 : 0;
+            Integer concreteIndex = (types.get(0).getType() == Schema.Type.NULL) ? 1 : 0;
             return fromAvro(obj, types.get(concreteIndex));
+        }
+    }
+
+
+    public static Fields toCascadingFields(Schema schema) {
+        List<Schema.Field> avroFields = schema.getFields();
+        Comparable[] fieldNames = new Comparable[avroFields.size()];
+        Type[] fieldTypes = new Type[avroFields.size()];
+
+        for (int i = 0; i < fieldNames.length; i++) {
+            Schema.Field avroField = avroFields.get(i);
+            fieldNames[i] = avroField.name();
+            fieldTypes[i] = avroTypeToCascadingType(avroField.schema());
+        }
+        return new Fields(fieldNames, fieldTypes);
+    }
+
+    private static Type avroTypeToCascadingType(Schema schema) {
+        switch (schema.getType()) {
+            case RECORD:
+            case ARRAY:
+                return Object[].class;
+
+            case ENUM:
+            case STRING:
+                return String.class;
+
+            case FIXED:
+            case BYTES:
+                return BytesWritable.class;
+
+            case MAP:
+                return Map.class;
+
+            case NULL:
+                return Void.class;
+
+            case BOOLEAN:
+                return boolean.class;
+
+            case DOUBLE:
+                return double.class;
+
+            case FLOAT:
+                return float.class;
+
+            case INT:
+                return int.class;
+
+            case LONG:
+                return long.class;
+
+            case UNION:
+                return avroUnionToCascadingType(schema.getTypes());
+            default:
+                throw new RuntimeException("Can't convert from type " + schema.getType().toString());
+        }
+    }
+
+    private static Type avroUnionToCascadingType(List<Schema> schemas) {
+        if (schemas.size() < 1) {
+            throw new AvroRuntimeException("Union has no types");
+        }
+        if (schemas.size() == 1) {
+            return avroTypeToCascadingType(schemas.get(0));
+        } else if (schemas.size() > 2) {
+            throw new AvroRuntimeException("Unions may only consist of a concrete type and null in cascading.avro");
+        } else if (!schemas.get(0).getType().equals(Schema.Type.NULL) && !schemas.get(1).getType().equals(Schema.Type.NULL)) {
+            throw new AvroRuntimeException("Unions may only consist of a concrete type and null in cascading.avro");
+        } else {
+            int concreteIndex = (schemas.get(0).getType() == Schema.Type.NULL) ? 1 : 0;
+            Type raw = avroTypeToCascadingType(schemas.get(concreteIndex));
+            return upcaseType(raw);
+        }
+    }
+
+    private static Type upcaseType(Type raw) {
+        if (raw == boolean.class) {
+            return Boolean.class;
+        } else if (raw == double.class) {
+            return Double.class;
+        } else if (raw == float.class) {
+            return Float.class;
+        } else if (raw == int.class) {
+            return Integer.class;
+        } else if (raw == long.class) {
+            return Long.class;
+        } else {
+            return raw;
         }
     }
 

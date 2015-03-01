@@ -60,11 +60,7 @@ public class AvroScheme extends Scheme<Properties, InputStream, OutputStream, Da
             setSinkFields(Fields.ALL);
             setSourceFields(Fields.UNKNOWN);
         } else {
-            Fields cascadingFields = new Fields();
-            for (Schema.Field avroField : schema.getFields()) {
-                cascadingFields = cascadingFields.append(
-                        new Fields(avroField.name()));
-            }
+            Fields cascadingFields = AvroToCascading.toCascadingFields(schema);
             setSinkFields(cascadingFields);
             setSourceFields(cascadingFields);
         }
@@ -194,13 +190,7 @@ public class AvroScheme extends Scheme<Properties, InputStream, OutputStream, Da
                 schema = Schema.create(Schema.Type.NULL);
             }
         }
-        Fields cascadingFields = new Fields();
-        if (schema.getType().equals(Schema.Type.NULL)) {
-            cascadingFields = Fields.NONE;
-        } else {
-            for (Schema.Field avroField : schema.getFields())
-                cascadingFields = cascadingFields.append(new Fields(avroField.name()));
-        }
+        Fields cascadingFields = AvroToCascading.toCascadingFields(schema);
         setSourceFields(cascadingFields);
         return getSourceFields();
     }

@@ -96,11 +96,7 @@ public class AvroScheme extends Scheme<JobConf, RecordReader, OutputCollector, O
             setSinkFields(Fields.ALL);
             setSourceFields(Fields.UNKNOWN);
         } else {
-            Fields cascadingFields = new Fields();
-            for (Field avroField : schema.getFields()) {
-                cascadingFields = cascadingFields.append(
-                        new Fields(avroField.name()));
-            }
+            Fields cascadingFields = AvroToCascading.toCascadingFields(schema);
             setSinkFields(cascadingFields);
             setSourceFields(cascadingFields);
         }
@@ -217,13 +213,7 @@ public class AvroScheme extends Scheme<JobConf, RecordReader, OutputCollector, O
                 throw new RuntimeException("Can't get schema from data source");
             }
         }
-        Fields cascadingFields = new Fields();
-        if (schema.getType().equals(Schema.Type.NULL)) {
-            cascadingFields = Fields.NONE;
-        } else {
-            for (Field avroField : schema.getFields())
-                cascadingFields = cascadingFields.append(new Fields(avroField.name()));
-        }
+        Fields cascadingFields = AvroToCascading.toCascadingFields(schema);
         setSourceFields(cascadingFields);
         return getSourceFields();
     }

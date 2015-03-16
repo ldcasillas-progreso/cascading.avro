@@ -179,7 +179,8 @@ public class AvroSchemeTest extends Assert {
             Arrays.asList(new TreeNode("First Child", 2, new ArrayList<TreeNode>())));
         AvroScheme scheme = new AvroScheme(treeNode.getSchema());
 
-        Fields treeNodeFields = new Fields("label", "count", "children");
+        Fields treeNodeFields = new Fields("label", "count", "children")
+                .applyTypes(String.class, int.class, Object[].class);
         TupleEntry tupleEntryIn = new TupleEntry(treeNodeFields, new Tuple("Root", 2, new Tuple()));
         TupleEntry tupleEntryOut = sinkAndSourceTupleEntry(tupleEntryIn, scheme);
         assertEquals(tupleEntryIn, tupleEntryOut);
@@ -206,7 +207,12 @@ public class AvroSchemeTest extends Assert {
                 "maleLine",
                 "surnames",
                 "femaleBirthDate",
-                "maleBirthDate"),
+                "maleBirthDate")
+                .applyTypes(Object[].class,
+                            Object[].class,
+                            Object[].class,
+                            long.class,
+                            long.class),
             new Tuple(
                 new TreeNode("Mary", 3, Arrays.asList(
                     new TreeNode("Emily", 0, new LinkedList<TreeNode>()),

@@ -3,6 +3,7 @@ package cascading.avro.local;
 import cascading.avro.conversion.AvroConverter;
 import cascading.avro.conversion.AvroToCascading;
 import cascading.avro.conversion.CascadingToAvro;
+import cascading.avro.conversion.FieldsUtil;
 import cascading.flow.FlowProcess;
 import cascading.scheme.Scheme;
 import cascading.scheme.SinkCall;
@@ -90,13 +91,7 @@ public class AvroScheme extends Scheme<Properties, InputStream, OutputStream, Da
     }
 
     protected Fields getCascadingFields() {
-        List<Schema.Field> avroFields = this.schema.getFields();
-        Comparable[] fieldNames = new String[avroFields.size()];
-        for (int i = 0; i < avroFields.size(); i++) {
-            Schema.Field avroField = avroFields.get(i);
-            fieldNames[i] = avroField.name();
-        }
-        return new Fields(fieldNames);
+        return FieldsUtil.toCascadingFields(this.schema);
     }
 
     DataFileStream<IndexedRecord> createInput(InputStream inputStream) {
@@ -195,14 +190,10 @@ public class AvroScheme extends Scheme<Properties, InputStream, OutputStream, Da
                 schema = Schema.create(Schema.Type.NULL);
             }
         }
-        Fields cascadingFields = new Fields();
-        if (schema.getType().equals(Schema.Type.NULL)) {
-            cascadingFields = Fields.NONE;
-        }
-        else {
-            for (Schema.Field avroField : schema.getFields())
-                cascadingFields = cascadingFields.append(new Fields(avroField.name()));
-        }
+        Fields cascadingFields =
+                schema.getType().equals(Schema.Type.NULL) ?
+                        Fields.NONE :
+                        FieldsUtil.toCascadingFields(schema);
         setSourceFields(cascadingFields);
         return getSourceFields();
     }

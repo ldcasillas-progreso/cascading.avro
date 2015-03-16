@@ -194,7 +194,7 @@ public class AvroScheme extends Scheme<JobConf, RecordReader, OutputCollector, O
         // Set the output schema and output format class
         conf.set(AvroJob.OUTPUT_SCHEMA, schema.toString());
         conf.setOutputFormat(AvroOutputFormat.class);
-
+        conf.setBoolean("mapred.mapper.new-api", false);
 
         // add AvroSerialization to io.serializations
         addAvroSerializations(conf);
@@ -278,6 +278,7 @@ public class AvroScheme extends Scheme<JobConf, RecordReader, OutputCollector, O
         // Set the input schema and input class
         conf.set(AvroJob.INPUT_SCHEMA, schema.toString());
         conf.setInputFormat(AvroInputFormat.class);
+        conf.setBoolean("mapred.mapper.new-api", false);
 
         // add AvroSerialization to io.serializations
         addAvroSerializations(conf);

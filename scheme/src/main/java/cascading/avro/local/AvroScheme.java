@@ -3,7 +3,7 @@ package cascading.avro.local;
 import cascading.avro.conversion.AvroConverter;
 import cascading.avro.conversion.AvroToCascading;
 import cascading.avro.conversion.CascadingToAvro;
-import cascading.avro.conversion.FieldsUtil;
+import cascading.avro.CascadingFields;
 import cascading.flow.FlowProcess;
 import cascading.scheme.Scheme;
 import cascading.scheme.SinkCall;
@@ -91,7 +91,7 @@ public class AvroScheme extends Scheme<Properties, InputStream, OutputStream, Da
     }
 
     protected Fields getCascadingFields() {
-        return FieldsUtil.toCascadingFields(this.schema);
+        return CascadingFields.generateCascadingFields(this.schema);
     }
 
     DataFileStream<IndexedRecord> createInput(InputStream inputStream) {
@@ -193,7 +193,7 @@ public class AvroScheme extends Scheme<Properties, InputStream, OutputStream, Da
         Fields cascadingFields =
                 schema.getType().equals(Schema.Type.NULL) ?
                         Fields.NONE :
-                        FieldsUtil.toCascadingFields(schema);
+                        CascadingFields.generateCascadingFields(schema);
         setSourceFields(cascadingFields);
         return getSourceFields();
     }

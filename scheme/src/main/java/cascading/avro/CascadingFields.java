@@ -1,6 +1,8 @@
-package cascading.avro.conversion;
+package cascading.avro;
 
 import cascading.tuple.Fields;
+import cascading.tuple.Tuple;
+import cascading.tuple.TupleEntry;
 import org.apache.avro.AvroRuntimeException;
 import org.apache.avro.Schema;
 import org.apache.hadoop.io.BytesWritable;
@@ -10,11 +12,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Utility methods for converting between Avro {@link Schema} and Cascading {@link Fields} objects.
+ * The dual to {@link AvroSchemata}: given an Avro {@link Schema}, generate a Cascading {@link Fields} object from it.
  *
  * @author Luis Casillas
  */
-public abstract class FieldsUtil {
+public abstract class CascadingFields {
 
     /**
      * Parse an Avro {@link Schema} and produce a <em>typed</em> Cascading {@link Fields} object from it.
@@ -22,7 +24,7 @@ public abstract class FieldsUtil {
      * @param schema an Avro {@link Schema}
      * @return a <em>typed</em> Cascading {@link Fields} object
      */
-    public static Fields toCascadingFields(Schema schema) {
+    public static Fields generateCascadingFields(Schema schema) {
         List<Schema.Field> avroFields = schema.getFields();
         Comparable[] fieldNames = new Comparable[avroFields.size()];
         Type[] fieldTypes = new Type[avroFields.size()];
@@ -38,8 +40,10 @@ public abstract class FieldsUtil {
     private static Type avroTypeToCascadingType(Schema schema) {
         switch (schema.getType()) {
             case RECORD:
+                return TupleEntry.class;
+
             case ARRAY:
-                return Object[].class;
+                return List.class;
 
             case ENUM:
             case STRING:

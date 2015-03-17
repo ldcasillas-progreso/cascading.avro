@@ -17,7 +17,6 @@ package cascading.avro;
 import cascading.avro.conversion.AvroConverter;
 import cascading.avro.conversion.AvroToCascading;
 import cascading.avro.conversion.CascadingToAvro;
-import cascading.avro.conversion.FieldsUtil;
 import cascading.avro.serialization.AvroSpecificDataSerialization;
 import cascading.flow.FlowProcess;
 import cascading.scheme.Scheme;
@@ -35,7 +34,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import org.apache.avro.Schema;
-import org.apache.avro.Schema.Field;
 import org.apache.avro.file.DataFileStream;
 import org.apache.avro.generic.GenericData.Record;
 import org.apache.avro.generic.GenericDatumReader;
@@ -144,7 +142,7 @@ public class AvroScheme extends Scheme<JobConf, RecordReader, OutputCollector, O
     }
 
     protected Fields getCascadingFields() {
-        return FieldsUtil.toCascadingFields(this.schema);
+        return CascadingFields.generateCascadingFields(this.schema);
     }
 
     /**
@@ -251,7 +249,7 @@ public class AvroScheme extends Scheme<JobConf, RecordReader, OutputCollector, O
                 throw new RuntimeException("Can't get schema from data source");
             }
         }
-        Fields cascadingFields = FieldsUtil.toCascadingFields(schema);
+        Fields cascadingFields = CascadingFields.generateCascadingFields(schema);
         setSourceFields(cascadingFields);
         return getSourceFields();
     }
